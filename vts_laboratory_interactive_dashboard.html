@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTS Laboratory - Interactive Quality & Operations Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        lab: {
+                            bg: '#0F172A',
+                            card: '#1E293B',
+                            border: '#334155',
+                            accent: '#0EA5E9',
+                            emerald: '#10B981',
+                            amber: '#F59E0B',
+                            rose: '#EF4444',
+                            purple: '#8B5CF6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #0ea5e9;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col md:flex-row overflow-x-hidden custom-scrollbar">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebarDrawer" class="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 z-30">
+        <!-- Sidebar Header -->
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-sky-500/20">
+                    <i class="fa-solid fa-wave-square"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-100 text-base leading-tight">VTS LAB</h1>
+                    <p class="text-[11px] text-sky-400 font-medium">Vibration Testing Laboratory</p>
+                </div>
+            </div>
+            <!-- Mobile Toggle Button -->
+            <button id="mobileMenuBtn" class="md:hidden text-slate-400 hover:text-white text-xl p-2 focus:outline-none">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav id="sidebarNav" class="hidden md:flex flex-col flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+            <button data-tab="overview" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors bg-sky-500/10 text-sky-400 border border-sky-500/20 text-left">
+                <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                <span>Dashboard Overview</span>
+            </button>
+            <button data-tab="objectives" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200 text-left">
+                <i class="fa-solid fa-bullseye w-5 text-center"></i>
+                <span>1. Objective Quality</span>
+            </button>
+            <button data-tab="maintenance" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200 text-left">
+                <i class="fa-solid fa-screwdriver-wrench w-5 text-center"></i>
+                <span>2 & 3. Maintenance & Calib</span>
+            </button>
+            <button data-tab="qaqc" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200 text-left">
+                <i class="fa-solid fa-clipboard-check w-5 text-center"></i>
+                <span>4. QA/QC & NC Tracker</span>
+            </button>
+            <button data-tab="procurement" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200 text-left">
+                <i class="fa-solid fa-boxes-packing w-5 text-center"></i>
+                <span>5. Perolehan / Procurement</span>
+            </button>
+            <button data-tab="lqms" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200 text-left">
+                <i class="fa-solid fa-shield-halved w-5 text-center"></i>
+                <span>6. LQMS & Risk Matrix</span>
+            </button>
+            <button data-tab="training" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200 text-left">
+                <i class="fa-solid fa-user-graduate w-5 text-center"></i>
+                <span>7. Training & Competency</span>
+            </button>
+            <button data-tab="agenda" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-slate-200 text-left">
+                <i class="fa-solid fa-calendar-check w-5 text-center"></i>
+                <span>8. Agenda & Action Items</span>
+            </button>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-500">
+            <div class="flex items-center space-x-2 text-slate-400 mb-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="font-semibold text-slate-300">MS ISO/IEC 17025</span>
+            </div>
+            <p class="text-[11px]">SAMM Scope: Sine, Shock, Random Vibration Testing</p>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-950 overflow-y-auto custom-scrollbar">
+        <!-- TOP HEADER BAR -->
+        <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 p-4 sticky top-0 z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <h2 id="pageTitle" class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-sky-400"></i> Dashboard Overview
+                </h2>
+                <p class="text-xs text-slate-400">Monitoring quality objectives, maintenance, calibration & competency</p>
+            </div>
+
+            <!-- Global Action Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+                <select id="quarterFilter" class="bg-slate-800 text-slate-200 border border-slate-700 text-xs rounded-lg px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                    <option value="2026-all">Year 2026 (All Period)</option>
+                    <option value="q1">Q1 2026 (Jan - Mar)</option>
+                    <option value="q2">Q2 2026 (Apr - Jun)</option>
+                    <option value="q3" selected>Q3 2026 (Jul - Sep)</option>
+                    <option value="q4">Q4 2026 (Oct - Dec)</option>
+                </select>
+
+                <button onclick="openModal('quickAddModal')" class="bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition shadow-md shadow-sky-500/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> Add New Record
+                </button>
+            </div>
+        </header>
+
+        <!-- TAB CONTENTS CONTAINERS -->
+        <div class="p-4 md:p-6 space-y-6">
+
+            <!-- 1. OVERVIEW VIEW -->
+            <div id="tab-overview" class="tab-content active space-y-6">
+                <!-- KPI Scorecards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card rounded-xl p-4 flex items-center justify-between relative overflow-hidden">
+                        <div>
+                            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Quality Objectives</p>
+                            <h3 class="text-2xl font-bold text-white mt-1">100% <span class="text-xs font-normal text-emerald-400 ml-1"><i class="fa-solid fa-circle-check"></i> QO1-8 Met</span></h3>
+                            <p class="text-[11px] text-slate-400 mt-1">Target: 100% Compliance</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 text-xl">
+                            <i class="fa-solid fa-award"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-4 flex items-center justify-between relative overflow-hidden">
+                        <div>
+                            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Equipment Readiness</p>
+                            <h3 class="text-2xl font-bold text-white mt-1">100% <span class="text-xs font-normal text-emerald-400 ml-1">Fit For Purpose</span></h3>
+                            <p class="text-[11px] text-slate-400 mt-1">Calib & IC Up-to-date</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl">
+                            <i class="fa-solid fa-microchip"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-4 flex items-center justify-between relative overflow-hidden">
+                        <div>
+                            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Open NC / CA Status</p>
+                            <h3 class="text-2xl font-bold text-white mt-1">0 <span class="text-xs font-normal text-emerald-400 ml-1">Active NCs</span></h3>
+                            <p class="text-[11px] text-slate-400 mt-1">DSM & IQA Audits Cleared</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl">
+                            <i class="fa-solid fa-folder-check"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-4 flex items-center justify-between relative overflow-hidden">
+                        <div>
+                            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Customer CSAT Score</p>
+                            <h3 class="text-2xl font-bold text-white mt-1">100% <span class="text-xs font-normal text-emerald-400 ml-1">Complaints: 0</span></h3>
+                            <p class="text-[11px] text-slate-400 mt-1">Target >= 90% CSAT</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl">
+                            <i class="fa-solid fa-face-smile"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="glass-card rounded-xl p-5 border border-slate-800 lg:col-span-2">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-slate-100 flex items-center gap-2 text-sm">
+                                <i class="fa-solid fa-chart-column text-sky-400"></i> Equipment Maintenance & Calib Execution
+                            </h3>
+                            <span class="text-xs bg-sky-500/10 text-sky-400 px-2.5 py-1 rounded-full border border-sky-500/20">Year 2026 Target</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="overviewEquipChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-5 border border-slate-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-slate-100 flex items-center gap-2 text-sm">
+                                <i class="fa-solid fa-chart-pie text-purple-400"></i> Training Plan Completion
+                            </h3>
+                            <span class="text-xs text-slate-400">TNA Status</span>
+                        </div>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="trainingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. OBJECTIVE QUALITY VIEW -->
+            <div id="tab-objectives" class="tab-content space-y-6">
+                <div class="glass-card rounded-xl p-5 border border-slate-800">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-bullseye text-sky-400"></i> Quality Objectives Status (QO1 - QO8)
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">SAMM MS ISO/IEC 17025 Accreditation Quality Objectives Compliance</p>
+                        </div>
+                        <span class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 font-medium">
+                            <i class="fa-solid fa-check-circle mr-1"></i> 100% Compliance Achieved
+                        </span>
+                    </div>
+
+                    <!-- Grid of QO Items -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="qoContainer">
+                        <!-- Populated dynamic HTML -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. MAINTENANCE & CALIBRATION VIEW -->
+            <div id="tab-maintenance" class="tab-content space-y-6">
+                <div class="flex border-b border-slate-800 space-x-4">
+                    <button onclick="switchSubTab('maint', 'equipList')" id="subtab-maint-equipList" class="pb-2 text-sm font-medium text-sky-400 border-b-2 border-sky-400">Equipment Master & Calib</button>
+                    <button onclick="switchSubTab('maint', 'pmLog')" id="subtab-maint-pmLog" class="pb-2 text-sm font-medium text-slate-400 hover:text-slate-200">Preventive Maintenance & F-Test</button>
+                </div>
+
+                <!-- Subtab 1: Equipment Master -->
+                <div id="subcontent-equipList" class="space-y-4">
+                    <div class="glass-card rounded-xl p-5 border border-slate-800">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                            <h3 class="text-base font-semibold text-white">Equipment Calibration & Intermediate Check Status</h3>
+                            <div class="flex items-center space-x-2 w-full md:w-auto">
+                                <input type="text" id="equipSearch" placeholder="Search shaker, accelerometer..." onkeyup="filterEquipmentTable()" class="bg-slate-900 text-xs border border-slate-700 rounded-lg px-3 py-2 text-slate-200 w-full md:w-64 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                                <button onclick="openModal('addMaintModal')" class="bg-sky-500 hover:bg-sky-600 text-white text-xs px-3 py-2 rounded-lg font-semibold shrink-0">
+                                    + Log Event
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-900/80 uppercase text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-3">Equipment Name</th>
+                                        <th class="p-3">ID Tag</th>
+                                        <th class="p-3">Calibration Status</th>
+                                        <th class="p-3">Last Calibration</th>
+                                        <th class="p-3">Next Due Date</th>
+                                        <th class="p-3">Intermediate Check (IC)</th>
+                                        <th class="p-3 text-center">Fit Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equipTableBody" class="divide-y divide-slate-800">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subtab 2: PM Log -->
+                <div id="subcontent-pmLog" class="space-y-4 hidden">
+                    <div class="glass-card rounded-xl p-5 border border-slate-800">
+                        <h3 class="text-base font-semibold text-white mb-4">Preventive Maintenance (Weekly, 6-Monthly) & F-Test</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-900/80 uppercase text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-3">Program Type</th>
+                                        <th class="p-3">Frequency</th>
+                                        <th class="p-3">Equipment</th>
+                                        <th class="p-3">Person In Charge</th>
+                                        <th class="p-3">Scheduled Period</th>
+                                        <th class="p-3">Status</th>
+                                        <th class="p-3">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pmTableBody" class="divide-y divide-slate-800">
+                                    <!-- Dynamic PM Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. QA/QC & NC TRACKER VIEW -->
+            <div id="tab-qaqc" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="glass-card rounded-xl p-5 border border-slate-800 lg:col-span-2 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-semibold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-flask-vial text-sky-400"></i> Proficiency Testing (PT) & ILC Program
+                            </h3>
+                            <span class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded border border-slate-700">MYSA-T-24A.L2</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-900/80 uppercase text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-2.5">Parameter / Scope</th>
+                                        <th class="p-2.5">Type</th>
+                                        <th class="p-2.5">Participating Partner</th>
+                                        <th class="p-2.5">Schedule</th>
+                                        <th class="p-2.5">Result / En Score</th>
+                                        <th class="p-2.5">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800">
+                                    <tr>
+                                        <td class="p-2.5 font-medium text-slate-100">Sinusoidal Vibration (5Hz - 2000Hz)</td>
+                                        <td class="p-2.5">ILC</td>
+                                        <td class="p-2.5">Intekma / External Lab</td>
+                                        <td class="p-2.5">Jun 2026</td>
+                                        <td class="p-2.5 text-emerald-400 font-bold">En = 0.12 (Pass)</td>
+                                        <td class="p-2.5"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 text-[10px]">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 font-medium text-slate-100">Random Vibration Acceleration PSD</td>
+                                        <td class="p-2.5">PT Program</td>
+                                        <td class="p-2.5">SAMM Approved Provider</td>
+                                        <td class="p-2.5">Sep 2026</td>
+                                        <td class="p-2.5 text-slate-400">Evaluation Pending</td>
+                                        <td class="p-2.5"><span class="bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded border border-sky-500/20 text-[10px]">In Progress</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 font-medium text-slate-100">Shock Vibration (11ms Half-sine)</td>
+                                        <td class="p-2.5">Interpersonnel QC</td>
+                                        <td class="p-2.5">Internal Lab Team</td>
+                                        <td class="p-2.5">Nov 2026</td>
+                                        <td class="p-2.5 text-slate-400">Scheduled</td>
+                                        <td class="p-2.5"><span class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 text-[10px]">Planned</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-5 border border-slate-800 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-semibold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Non-Conformance Tracker
+                            </h3>
+                            <button onclick="openModal('addNcModal')" class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded text-xs hover:bg-amber-500/30">
+                                + Report NC
+                            </button>
+                        </div>
+                        <div class="space-y-3" id="ncListContainer">
+                            <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-semibold text-slate-200">DSM External Audit NC</span>
+                                    <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">0 Open / Closed</span>
+                                </div>
+                                <p class="text-xs text-slate-400">All findings from Department of Standards Malaysia audit resolved.</p>
+                            </div>
+                            <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-semibold text-slate-200">Internal QA Audit (IQA) NC</span>
+                                    <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">0 Open / Closed</span>
+                                </div>
+                                <p class="text-xs text-slate-400">IQA conducted annually per MYSA-T-11B requirements.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. PROCUREMENT VIEW -->
+            <div id="tab-procurement" class="tab-content space-y-6">
+                <div class="glass-card rounded-xl p-5 border border-slate-800 space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-boxes-packing text-sky-400"></i> Perolehan / Procurement Pipeline (QO5 Specification Control)
+                            </h3>
+                            <p class="text-xs text-slate-400">Verifying all testing consumables, sensors, and cables against QO5 standard specs</p>
+                        </div>
+                        <button onclick="openModal('addProcurementModal')" class="bg-sky-500 hover:bg-sky-600 text-white text-xs px-3.5 py-2 rounded-lg font-semibold shadow-md shadow-sky-500/20">
+                            + New Requisition
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900/80 uppercase text-slate-400 border-b border-slate-800">
+                                <tr>
+                                    <th class="p-3">Requisition Item</th>
+                                    <th class="p-3">Category</th>
+                                    <th class="p-3">Indicative Cost</th>
+                                    <th class="p-3">Supplier / Provider</th>
+                                    <th class="p-3">QO5 Verification</th>
+                                    <th class="p-3">Pipeline Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="procurementTableBody" class="divide-y divide-slate-800">
+                                <tr>
+                                    <td class="p-3 font-semibold text-slate-100">Triaxial Accelerometer Sensors</td>
+                                    <td class="p-3">Consumables</td>
+                                    <td class="p-3 font-semibold text-slate-200">RM 12,500.00</td>
+                                    <td class="p-3">PCB Piezotronics Vendor</td>
+                                    <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] border border-emerald-500/20">Verified</span></td>
+                                    <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] border border-emerald-500/20">Delivered & Inspected</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold text-slate-100">VCAT-II Training Course Fee</td>
+                                    <td class="p-3">Services</td>
+                                    <td class="p-3 font-semibold text-slate-200">RM 10,000.00</td>
+                                    <td class="p-3">Intekma / AFCM</td>
+                                    <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px] border border-emerald-500/20">Verified</span></td>
+                                    <td class="p-3"><span class="bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded text-[10px] border border-sky-500/20">PO Issued</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. LQMS & RISK MATRIX VIEW -->
+            <div id="tab-lqms" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card rounded-xl p-5 border border-slate-800 space-y-4">
+                        <h3 class="font-semibold text-white text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-file-contract text-sky-400"></i> LQMS Document Review Tracker
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800 flex justify-between items-center">
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-100">MYSA-T-11B.L4 Technical Manual</p>
+                                    <p class="text-[10px] text-slate-400">Annual Review: Jan 2026</p>
+                                </div>
+                                <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20">Up to Date</span>
+                            </div>
+                            <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800 flex justify-between items-center">
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-100">MYSA-Q-52C Risk Register</p>
+                                    <p class="text-[10px] text-slate-400">Quarterly Review: Jul 2026</p>
+                                </div>
+                                <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20">Up to Date</span>
+                            </div>
+                            <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800 flex justify-between items-center">
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-100">Method Vf / Vd Testing Methods</p>
+                                    <p class="text-[10px] text-slate-400">Standard Update Review</p>
+                                </div>
+                                <span class="text-xs bg-sky-500/10 text-sky-400 px-2 py-1 rounded border border-sky-500/20">Active Review</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-5 border border-slate-800 space-y-4">
+                        <h3 class="font-semibold text-white text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-amber-400"></i> Risk Assessment Matrix (QO7)
+                        </h3>
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs font-semibold text-slate-200">
+                            <div class="p-3 rounded-lg bg-amber-500/20 border border-amber-500/30 flex flex-col justify-center items-center h-20">
+                                <span class="text-[10px] text-amber-300 uppercase">Medium Risk</span>
+                                <p class="text-[11px] font-normal mt-1">Equip Calib Delay</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-rose-500/20 border border-rose-500/30 flex flex-col justify-center items-center h-20">
+                                <span class="text-[10px] text-rose-300 uppercase">High Risk</span>
+                                <p class="text-[11px] font-normal mt-1">Shaker Failure</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-rose-500/30 border border-rose-500/40 flex flex-col justify-center items-center h-20">
+                                <span class="text-[10px] text-rose-300 uppercase">Critical</span>
+                                <p class="text-[11px] font-normal mt-1">Test Invalidity</p>
+                            </div>
+
+                            <div class="p-3 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex flex-col justify-center items-center h-20">
+                                <span class="text-[10px] text-emerald-300 uppercase">Low Risk</span>
+                                <p class="text-[11px] font-normal mt-1">Impartiality Risk</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-amber-500/20 border border-amber-500/30 flex flex-col justify-center items-center h-20">
+                                <span class="text-[10px] text-amber-300 uppercase">Medium Risk</span>
+                                <p class="text-[11px] font-normal mt-1">Skill Gap MU</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-rose-500/20 border border-rose-500/30 flex flex-col justify-center items-center h-20">
+                                <span class="text-[10px] text-rose-300 uppercase">High Risk</span>
+                                <p class="text-[11px] font-normal mt-1">Supply Delay</p>
+                            </div>
+
+                            <div class="p-3 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex flex-col justify-center items-center h-20">
+                                <span class="text-[10px] text-emerald-300 uppercase">Low Risk</span>
+                                <p class="text-[11px] font-normal mt-1">Doc Control</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex flex-col justify-center items-center h-20">
+                                <span class="text-[10px] text-emerald-300 uppercase">Low Risk</span>
+                                <p class="text-[11px] font-normal mt-1">CSAT Dip</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-amber-500/20 border border-amber-500/30 flex flex-col justify-center items-center h-20">
+                                <span class="text-[10px] text-amber-300 uppercase">Medium Risk</span>
+                                <p class="text-[11px] font-normal mt-1">Software Patch</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. TRAINING & COMPETENCY VIEW -->
+            <div id="tab-training" class="tab-content space-y-6">
+                <div class="glass-card rounded-xl p-5 border border-slate-800 space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-user-graduate text-purple-400"></i> Training Need Analysis (TNA) & Implementation
+                            </h3>
+                            <p class="text-xs text-slate-400">Competency tracking for Fairul, Ammar, Suhayl, Ooi Sock Theng, Noor Azawani, Karthigesu</p>
+                        </div>
+                        <button onclick="openModal('addTrainingModal')" class="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3.5 py-2 rounded-lg font-semibold shadow-md shadow-purple-500/20">
+                            + Add Training Item
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900/80 uppercase text-slate-400 border-b border-slate-800">
+                                <tr>
+                                    <th class="p-3">Priority</th>
+                                    <th class="p-3">Identified Skill Gap</th>
+                                    <th class="p-3">Personnel</th>
+                                    <th class="p-3">Type & Description</th>
+                                    <th class="p-3">Provider & Cost</th>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trainingTableBody" class="divide-y divide-slate-800">
+                                <!-- Dynamic JS Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. AGENDA & ACTION ITEMS VIEW -->
+            <div id="tab-agenda" class="tab-content space-y-6">
+                <div class="glass-card rounded-xl p-5 border border-slate-800 space-y-6">
+                    <div class="p-4 bg-gradient-to-r from-sky-900/40 via-slate-900 to-indigo-900/40 rounded-xl border border-sky-500/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <span class="text-xs uppercase tracking-wider text-sky-400 font-semibold">VTS Lab Meeting 4/6</span>
+                            <h3 class="text-lg font-bold text-white">18 September 2026 (10:30 am – 11:30 am)</h3>
+                            <p class="text-xs text-slate-300 mt-1"><i class="fa-solid fa-location-dot mr-1"></i> Vibration Testing Laboratory Workspace</p>
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="bg-slate-800 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700">Attendees: 4 Present / 2 Absent</span>
+                        </div>
+                    </div>
+
+                    <!-- Attendance List -->
+                    <div>
+                        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Attendee Register</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs"><i class="fa-solid fa-check mr-1"></i> Fairul Azmin</span>
+                            <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs"><i class="fa-solid fa-check mr-1"></i> Ahmad Ammar</span>
+                            <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs"><i class="fa-solid fa-check mr-1"></i> Ooi Sock Theng</span>
+                            <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs"><i class="fa-solid fa-check mr-1"></i> Noor Azawani</span>
+                            <span class="px-2.5 py-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs"><i class="fa-solid fa-xmark mr-1"></i> Suhayl Azmin</span>
+                            <span class="px-2.5 py-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs"><i class="fa-solid fa-xmark mr-1"></i> Karthigesu</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Table -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-slate-200">Agenda & Meeting Action Tracker</h4>
+                            <button onclick="openModal('addAgendaModal')" class="bg-sky-500 text-white text-xs px-3.5 py-1.5 rounded-lg hover:bg-sky-600 font-semibold">
+                                + Add Agenda Item
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-900/80 uppercase text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-3">No</th>
+                                        <th class="p-3">Agenda Topic</th>
+                                        <th class="p-3">Discussion / Resolution</th>
+                                        <th class="p-3">Person Assigned</th>
+                                        <th class="p-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="agendaTableBody" class="divide-y divide-slate-800">
+                                    <!-- Dynamic Agenda Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MODAL POPUPS -->
+    <!-- Quick Add Record Modal -->
+    <div id="quickAddModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white">Create New Operational Record</h3>
+                <button onclick="closeModal('quickAddModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1">Target Section</label>
+                    <select id="recordTypeSelect" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                        <option value="agenda">Meeting Action Item</option>
+                        <option value="training">Training Record</option>
+                        <option value="maintenance">Maintenance Event</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Title / Description</label>
+                    <input type="text" id="recordTitle" placeholder="Record description..." class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Target Date</label>
+                    <input type="date" id="recordDate" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+                <button onclick="closeModal('quickAddModal')" class="px-3 py-1.5 bg-slate-800 text-slate-300 rounded text-xs">Cancel</button>
+                <button onclick="submitQuickRecord()" class="px-3 py-1.5 bg-sky-500 text-white rounded text-xs font-semibold hover:bg-sky-600">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // DATA ARRAYS
+        const qualityObjectives = [
+            { id: "QO1", name: "All equipment used in testing is Fit for Purpose", target: "100%", current: "100%", icon: "fa-microchip" },
+            { id: "QO2", name: "All testing procedures are using updated standard methods", target: "100%", current: "100%", icon: "fa-book-open" },
+            { id: "QO3", name: "All testing performed by competent and qualified personnel", target: "100%", current: "100%", icon: "fa-user-check" },
+            { id: "QO4", name: "Every operation free from any element of impartiality", target: "100%", current: "100%", icon: "fa-scale-balanced" },
+            { id: "QO5", name: "All supplies used in testing meet required specifications", target: "100%", current: "100%", icon: "fa-boxes-styled" },
+            { id: "QO6", name: "Practice QA/QC & PT/ILC programme for valid test results", target: "100%", current: "100%", icon: "fa-flask-vial" },
+            { id: "QO7", name: "Implement risk management to control potential operational risks", target: "100%", current: "100%", icon: "fa-shield-halved" },
+            { id: "QO8", name: "Achieve CSAT score >= 90% and valid complaints <= 3", target: "90%", current: "100%", icon: "fa-smile" }
+        ];
+
+        const equipmentList = [
+            { name: "Vibration Controller System", tag: "VTS-CTL-01", calibStatus: "Calibrated", lastCalib: "Mac 2026", nextCalib: "Mac 2027", icStatus: "Pass (Mac 2026)", fitStatus: "Fit" },
+            { name: "Reference Accelerometer", tag: "VTS-ACC-01", calibStatus: "Calibrated", lastCalib: "Mac 2026", nextCalib: "Mac 2027", icStatus: "Pass (Mac 2026)", fitStatus: "Fit" },
+            { name: "Triaxial Accelerometer Pack", tag: "VTS-ACC-02", calibStatus: "Calibrated", lastCalib: "Jan 2026", nextCalib: "Jan 2027", icStatus: "Pass (Jul 2026)", fitStatus: "Fit" },
+            { name: "Power Amplifier Unit", tag: "VTS-AMP-01", calibStatus: "Verified", lastCalib: "Feb 2026", nextCalib: "Feb 2027", icStatus: "Pass (Aug 2026)", fitStatus: "Fit" },
+            { name: "Electrodynamic Shaker 5kN", tag: "VTS-SHK-01", calibStatus: "Verified", lastCalib: "Feb 2026", nextCalib: "Feb 2027", icStatus: "Pass (Aug 2026)", fitStatus: "Fit" }
+        ];
+
+        const pmList = [
+            { program: "Weekly Routine Checks", freq: "Weekly", equip: "All Shakers", resp: "Lab Tech", month: "Ongoing", status: "Completed" },
+            { program: "6-Monthly Preventive Maintenance", freq: "6-Monthly", equip: "Slip Table & Power Amp", resp: "Vendor / Fairul", month: "Jun & Dec 2026", status: "Completed" },
+            { program: "Annual Functional Test (F-Test)", freq: "Annual", equip: "Controller System", resp: "Suhayl / Ammar", month: "Aug 2026", status: "Completed" },
+            { program: "Intermediate Check (IC)", freq: "Periodic", equip: "Accelerometers", resp: "All Personnel", month: "Mac & Oct 2026", status: "In Progress" }
+        ];
+
+        const trainingList = [
+            { priority: "Medium", gap: "Calibration & Intermediate Check", personnel: "All Staff", type: "OJT", desc: "Calibration for Controller & Accelerometer", provider: "In-house (RM 0)", date: "Mac 2026", status: "Completed" },
+            { priority: "Medium", gap: "Measurement Uncertainty & VCAT-II", personnel: "Suhayl", type: "Classroom", desc: "MU & VCAT-II Vibration Analyst Course", provider: "Intekma / AFCM (RM10,000)", date: "Jul 2026", status: "Completed" },
+            { priority: "High", gap: "Vibration Testing Refresher", personnel: "All Staff", type: "Practical", desc: "Refresher for Sinusoidal, Shock & Random", provider: "In-house (RM 0)", date: "Oct 2, 2026", status: "In Progress" }
+        ];
+
+        const agendaList = [
+            { id: 1, topic: "Issues From Last Meeting", detail: "Review previous meeting action items", resp: "Fairul Azmin", status: "Closed" },
+            { id: 2, topic: "Lab Ongoing Operational Issues", detail: "Shaker cooling and workspace maintenance", resp: "Ahmad Ammar", status: "In Progress" },
+            { id: 3, topic: "Achievement of Quality Objective", detail: "Reviewed QO1 to QO8 targets (100% achieved)", resp: "Ooi Sock Theng", status: "Completed" },
+            { id: 4, topic: "Training Need Analysis", detail: "Random Vibration training scheduled Oct 2026", resp: "Suhayl / Fairul", status: "Scheduled" }
+        ];
+
+        let equipChartInstance = null;
+        let trainChartInstance = null;
+
+        // SWITCH TAB FUNCTION
+        function activateTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show targeted tab
+            const targetContent = document.getElementById(`tab-${tabId}`);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+
+            // Update sidebar buttons highlight
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.getAttribute('data-tab') === tabId) {
+                    btn.classList.add('bg-sky-500/10', 'text-sky-400', 'border', 'border-sky-500/20');
+                    btn.classList.remove('text-slate-400');
+                } else {
+                    btn.classList.remove('bg-sky-500/10', 'text-sky-400', 'border', 'border-sky-500/20');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+
+            // Update Header Title
+            const titles = {
+                overview: '<i class="fa-solid fa-chart-pie text-sky-400"></i> Dashboard Overview',
+                objectives: '<i class="fa-solid fa-bullseye text-sky-400"></i> Objective Quality (QO1 - QO8)',
+                maintenance: '<i class="fa-solid fa-screwdriver-wrench text-sky-400"></i> Maintenance & Calibration Program',
+                qaqc: '<i class="fa-solid fa-clipboard-check text-sky-400"></i> QA/QC & Non-Conformance Tracker',
+                procurement: '<i class="fa-solid fa-boxes-packing text-sky-400"></i> Perolehan / Procurement Pipeline',
+                lqms: '<i class="fa-solid fa-shield-halved text-sky-400"></i> LQMS Review & Risk Matrix',
+                training: '<i class="fa-solid fa-user-graduate text-sky-400"></i> Training & Competency (TNA)',
+                agenda: '<i class="fa-solid fa-calendar-check text-sky-400"></i> VTS Lab Meeting Agenda & Actions'
+            };
+            const pageTitle = document.getElementById('pageTitle');
+            if (pageTitle && titles[tabId]) pageTitle.innerHTML = titles[tabId];
+
+            // Re-render chart sizing on tab view switch
+            if (tabId === 'overview') {
+                setTimeout(() => { initCharts(); }, 50);
+            }
+
+            // Close mobile sidebar if open
+            const sidebarNav = document.getElementById('sidebarNav');
+            if (window.innerWidth < 768 && sidebarNav) {
+                sidebarNav.classList.add('hidden');
+            }
+        }
+
+        function switchSubTab(parent, subId) {
+            ['equipList', 'pmLog'].forEach(id => {
+                const content = document.getElementById(`subcontent-${id}`);
+                const btn = document.getElementById(`subtab-maint-${id}`);
+                if (content) content.classList.add('hidden');
+                if (btn) {
+                    btn.classList.remove('text-sky-400', 'border-b-2', 'border-sky-400');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+            const activeContent = document.getElementById(`subcontent-${subId}`);
+            const activeBtn = document.getElementById(`subtab-maint-${subId}`);
+            if (activeContent) activeContent.classList.remove('hidden');
+            if (activeBtn) {
+                activeBtn.classList.add('text-sky-400', 'border-b-2', 'border-sky-400');
+                activeBtn.classList.remove('text-slate-400');
+            }
+        }
+
+        // RENDER DOM ELEMENTS
+        function renderObjectives() {
+            const container = document.getElementById('qoContainer');
+            if (!container) return;
+            container.innerHTML = qualityObjectives.map(qo => `
+                <div class="p-4 bg-slate-900/80 rounded-lg border border-slate-800 flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 text-lg shrink-0">
+                        <i class="fa-solid ${qo.icon}"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-sky-400">${qo.id}</span>
+                            <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">Compliant</span>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-100 mt-1">${qo.name}</p>
+                        <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400">
+                            <span>Target: <strong class="text-slate-200">${qo.target}</strong></span>
+                            <span>Achieved: <strong class="text-emerald-400">${qo.current}</strong></span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
+                            <div class="bg-emerald-500 h-1.5 rounded-full" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderEquipment() {
+            const tbody = document.getElementById('equipTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = equipmentList.map(eq => `
+                <tr class="hover:bg-slate-900/40">
+                    <td class="p-3 font-semibold text-slate-100">${eq.name}</td>
+                    <td class="p-3 font-mono text-slate-400">${eq.tag}</td>
+                    <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 text-[10px]">${eq.calibStatus}</span></td>
+                    <td class="p-3 text-slate-300">${eq.lastCalib}</td>
+                    <td class="p-3 text-slate-300">${eq.nextCalib}</td>
+                    <td class="p-3 text-emerald-400 font-medium">${eq.icStatus}</td>
+                    <td class="p-3 text-center"><span class="bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold">100% Fit</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPM() {
+            const tbody = document.getElementById('pmTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = pmList.map((pm, idx) => `
+                <tr class="hover:bg-slate-900/40">
+                    <td class="p-3 font-medium text-slate-100">${pm.program}</td>
+                    <td class="p-3 text-slate-400">${pm.freq}</td>
+                    <td class="p-3 text-slate-300">${pm.equip}</td>
+                    <td class="p-3 text-slate-300">${pm.resp}</td>
+                    <td class="p-3 text-slate-300">${pm.month}</td>
+                    <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-2 py-0.5 rounded border text-[10px]">${pm.status}</span></td>
+                    <td class="p-3"><button onclick="togglePM(${idx})" class="text-sky-400 hover:underline text-[11px]">Toggle</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderTraining() {
+            const tbody = document.getElementById('trainingTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = trainingList.map(tr => `
+                <tr class="hover:bg-slate-900/40">
+                    <td class="p-3"><span class="bg-amber-500/10 text-amber-400 border-amber-500/20 px-2 py-0.5 rounded border text-[10px]">${tr.priority}</span></td>
+                    <td class="p-3 font-semibold text-slate-100">${tr.gap}</td>
+                    <td class="p-3 text-slate-300">${tr.personnel}</td>
+                    <td class="p-3 text-slate-300"><span class="font-medium text-slate-200">${tr.type}:</span> ${tr.desc}</td>
+                    <td class="p-3 text-slate-300">${tr.provider}</td>
+                    <td class="p-3 text-slate-300">${tr.date}</td>
+                    <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-2 py-0.5 rounded border text-[10px]">${tr.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAgenda() {
+            const tbody = document.getElementById('agendaTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = agendaList.map(ag => `
+                <tr class="hover:bg-slate-900/40">
+                    <td class="p-3 font-bold text-sky-400">#${ag.id}</td>
+                    <td class="p-3 font-semibold text-slate-100">${ag.topic}</td>
+                    <td class="p-3 text-slate-300">${ag.detail}</td>
+                    <td class="p-3 text-slate-300">${ag.resp}</td>
+                    <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-2 py-0.5 rounded border text-[10px]">${ag.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function filterEquipmentTable() {
+            const q = document.getElementById('equipSearch').value.toLowerCase();
+            document.querySelectorAll('#equipTableBody tr').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        function togglePM(i) {
+            pmList[i].status = pmList[i].status === 'Completed' ? 'In Progress' : 'Completed';
+            renderPM();
+        }
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function submitQuickRecord() {
+            const type = document.getElementById('recordTypeSelect').value;
+            const title = document.getElementById('recordTitle').value;
+            if (!title) { alert('Please enter a description'); return; }
+
+            if (type === 'agenda') {
+                agendaList.push({ id: agendaList.length + 1, topic: title, detail: 'Quick entry record', resp: 'Lab Officer', status: 'In Progress' });
+                renderAgenda();
+            } else if (type === 'training') {
+                trainingList.push({ priority: 'Medium', gap: title, personnel: 'Lab Team', type: 'Briefing', desc: title, provider: 'In-house', date: '2026', status: 'Planned' });
+                renderTraining();
+            }
+            closeModal('quickAddModal');
+            document.getElementById('recordTitle').value = '';
+        }
+
+        function initCharts() {
+            const ctx1 = document.getElementById('overviewEquipChart');
+            if (ctx1) {
+                if (equipChartInstance) equipChartInstance.destroy();
+                equipChartInstance = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Preventive Maint', 'Calibration', 'Intermediate Check', 'Functional Test'],
+                        datasets: [{ label: '% Execution', data: [100, 100, 85, 100], backgroundColor: '#10B981', borderRadius: 6 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { max: 100 } } }
+                });
+            }
+
+            const ctx2 = document.getElementById('trainingChart');
+            if (ctx2) {
+                if (trainChartInstance) trainChartInstance.destroy();
+                trainChartInstance = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Completed', 'In Progress'],
+                        datasets: [{ data: [70, 30], backgroundColor: ['#10B981', '#0EA5E9'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }
+                });
+            }
+        }
+
+        // DOM LOAD EVENT LISTENERS
+        document.addEventListener('DOMContentLoaded', () => {
+            // Attach Click Listeners to Sidebar Navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tabId = btn.getAttribute('data-tab');
+                    activateTab(tabId);
+                });
+            });
+
+            // Mobile Menu Drawer Toggle
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            const sidebarNav = document.getElementById('sidebarNav');
+            if (mobileBtn && sidebarNav) {
+                mobileBtn.addEventListener('click', () => {
+                    sidebarNav.classList.toggle('hidden');
+                });
+            }
+
+            // Render tables & setup charts
+            renderObjectives();
+            renderEquipment();
+            renderPM();
+            renderTraining();
+            renderAgenda();
+            initCharts();
+        });
+    </script>
+</body>
+</html>
